@@ -19,16 +19,20 @@ class Critical(FunkLoadTestCase):
       """Setting up test."""
       self.server_url = self.conf_get('main', 'url')
 
+    def test_light_critical_path(self):
+        N = 1
+        self.test_critical_path()
+
     def test_critical_path(self):
 	server_url = self.server_url
-        # create a new user
-	self.get(server_url, description='Get root URL')
-	self.get(server_url + "/users/sign_up", description="View the user signup page")
-	auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
-	email = Lipsum().getUniqWord() + "@" + Lipsum().getWord() + ".com"
-	first_name = Lipsum().getWord()
-	last_name = Lipsum().getWord()
         try:
+            # create a new user
+            self.get(server_url, description='Get root URL')
+            self.get(server_url + "/users/sign_up", description="View the user signup page")
+            auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
+            email = Lipsum().getUniqWord() + "@" + Lipsum().getWord() + ".com"
+            first_name = Lipsum().getWord()
+            last_name = Lipsum().getWord()
             self.post(self.server_url + "/users",
                       params=[['user[email]', email],
                               ['user[first_name]', first_name],
@@ -39,7 +43,7 @@ class Critical(FunkLoadTestCase):
                               ['commit', 'Sign up']],
                       description="Create New User")
 
-            # create a new suppr
+            # create N new suppr
             for i in range(0, N):
                 self.get(server_url + "/dinners/new", description="Create a new suppr")
                 auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
@@ -68,7 +72,7 @@ class Critical(FunkLoadTestCase):
 
                 self.get(server_url + "dinners/join/"+created_suppr_id, description="View the created Suppr page")
 
-                # add a comment
+                # add N comments
                 for i in range(0, N):
                     self.get(server_url + "/dinners/"+created_suppr_id, description="View the created Suppr page")
                     auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
@@ -83,7 +87,7 @@ class Critical(FunkLoadTestCase):
                               description="Create New Comment")
 
         except Exception as e:
-            print "Exception"
+            print "Exception:\n"
             print str(e)
             raise e
 
@@ -91,10 +95,15 @@ class Critical(FunkLoadTestCase):
 
     def test_critical_path_readonly(self):
 	server_url = self.server_url
-	self.get(server_url, description='View root URL')
-	self.get(server_url + "/users/sign_up", description="View the user signup page")
-	self.get(server_url + "/users/sign_up", description="View the user signup page")
-	self.get(server_url + "/home/about", description="View the user signup page")
+        try:
+            self.get(server_url, description='View root URL')
+            self.get(server_url + "/dinners/", description='View root URL')
+            self.get(server_url + "/users/1", description="View the user signup page")
+            self.get(server_url + "/dinners/1", description="View the user signup page")
+        except Exception as e:            
+            print "Error, did you run the critical path test first?:\n"
+            print str(e)
+            raise e
 
 
 
