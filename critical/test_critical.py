@@ -78,7 +78,6 @@ class Critical(FunkLoadTestCase):
                     auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
                     comment_content = Lipsum().getSentence()
                     comment_suppr_id = extract_token(self.getBody(), 'id="comment_dinner_id" name="comment[dinner_id]" type="hidden" value="', '"')
-                    print comment_suppr_id
                     self.post(self.server_url + "/comments",
                               params=[['comment[content]', comment_content],
                                       ['comment[dinner_id]', comment_suppr_id],
