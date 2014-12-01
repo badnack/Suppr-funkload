@@ -1,5 +1,5 @@
 # -*- coding: iso-8859-15 -*-
-"""Simple FunkLoad test
+"""Critical path FunkLoad test
 $Id$
 """
 import unittest
@@ -10,7 +10,7 @@ from funkload.utils import extract_token
 from funkload.Lipsum import Lipsum
 from random import randint
 
-N = 7
+N = 1
 
 class Critical(FunkLoadTestCase):
     """This test use a configuration file Simple.conf."""
@@ -24,85 +24,76 @@ class Critical(FunkLoadTestCase):
         self.test_critical_path()
 
     def test_critical_path(self):
-	server_url = self.server_url
-        try:
-            # create a new user
-            self.get(server_url, description='Get root URL')
-            self.get(server_url + "/users/sign_up", description="View the user signup page")
+        server_url = self.server_url
+
+        # create a new user
+        self.get(server_url, description='Get root URL')
+        self.get(server_url + "/users/sign_up", description="View the user signup page")
+        auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
+        email = Lipsum().getUniqWord() + "@" + Lipsum().getWord() + ".com"
+        first_name = Lipsum().getWord()
+        last_name = Lipsum().getWord()
+        self.post(self.server_url + "/users",
+                  params=[['user[email]', email],
+                          ['user[first_name]', first_name],
+                          ['user[last_name]', last_name],
+                          ['user[password]', 'alphabet'],
+                          ['user[password_confirmation]', 'alphabet'],
+                          ['authenticity_token', auth_token],
+                          ['commit', 'Sign up']],
+                  description="Create New User")
+
+        # create N new suppr
+        for i in range(0, N):
+            self.get(server_url + "/dinners/new", description="Create a new suppr")
             auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
-            email = Lipsum().getUniqWord() + "@" + Lipsum().getWord() + ".com"
-            first_name = Lipsum().getWord()
-            last_name = Lipsum().getWord()
-            self.post(self.server_url + "/users",
-                      params=[['user[email]', email],
-                              ['user[first_name]', first_name],
-                              ['user[last_name]', last_name],
-                              ['user[password]', 'alphabet'],
-                              ['user[password_confirmation]', 'alphabet'],
+            suppr_title = Lipsum().getSentence()
+            suppr_date = datetime.date.today() + datetime.timedelta(days=randint(0,365*10))
+            suppr_location = Lipsum().getSentence()
+            suppr_description = Lipsum().getSentence()
+            suppr_category = "Italian"
+            suppr_price = 26
+            suppr_seats = 30
+            # FIXME: suppr_image ....
+            self.post(self.server_url + "/dinners",
+                      params=[['dinner[title]', suppr_title],
+                              ['dinner[date]', suppr_date],
+                              ['dinner[location]', suppr_location],
+                              ['dinner[description]', suppr_description],
+                              ['dinner[price]', suppr_price],
+                              ['dinner[category]', suppr_category],
+                              ['dinner[seats]', suppr_seats],
                               ['authenticity_token', auth_token],
-                              ['commit', 'Sign up']],
-                      description="Create New User")
+                              ['commit', 'Create Dinner']],
+                      description="Create New Suppr")
 
-            # create N new suppr
+            last_url = self.getLastUrl()
+            created_suppr_id = last_url.split('/')[-1]
+
+            self.get(server_url + "dinners/join/"+created_suppr_id, description="View the created Suppr page")
+
+            # add N comments
             for i in range(0, N):
-                self.get(server_url + "/dinners/new", description="Create a new suppr")
+                self.get(server_url + "/dinners/"+created_suppr_id, description="View the created Suppr page")
                 auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
-                suppr_title = Lipsum().getSentence()
-                suppr_date = datetime.date.today() + datetime.timedelta(days=randint(0,365*10))
-                suppr_location = Lipsum().getSentence()
-                suppr_description = Lipsum().getSentence()
-                suppr_category = "Italian"
-                suppr_price = 26
-                suppr_seats = 30
-                # FIXME: suppr_image ....
-                self.post(self.server_url + "/dinners",
-                          params=[['dinner[title]', suppr_title],
-                                  ['dinner[date]', suppr_date],
-                                  ['dinner[location]', suppr_location],
-                                  ['dinner[description]', suppr_description],
-                                  ['dinner[price]', suppr_price],
-                                  ['dinner[category]', suppr_category],
-                                  ['dinner[seats]', suppr_seats],
+                comment_content = Lipsum().getSentence()
+                comment_suppr_id = extract_token(self.getBody(), 'id="comment_dinner_id" name="comment[dinner_id]" type="hidden" value="', '"')
+                self.post(self.server_url + "/comments",
+                          params=[['comment[content]', comment_content],
+                                  ['comment[dinner_id]', comment_suppr_id],
                                   ['authenticity_token', auth_token],
-                                  ['commit', 'Create Dinner']],
-                          description="Create New Suppr")
-
-                last_url = self.getLastUrl()
-                created_suppr_id = last_url.split('/')[-1]
-
-                self.get(server_url + "dinners/join/"+created_suppr_id, description="View the created Suppr page")
-
-                # add N comments
-                for i in range(0, N):
-                    self.get(server_url + "/dinners/"+created_suppr_id, description="View the created Suppr page")
-                    auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
-                    comment_content = Lipsum().getSentence()
-                    comment_suppr_id = extract_token(self.getBody(), 'id="comment_dinner_id" name="comment[dinner_id]" type="hidden" value="', '"')
-                    self.post(self.server_url + "/comments",
-                              params=[['comment[content]', comment_content],
-                                      ['comment[dinner_id]', comment_suppr_id],
-                                      ['authenticity_token', auth_token],
-                                      ['commit', 'Create Comment']],
-                              description="Create New Comment")
-
-        except Exception as e:
-            print "Exception:\n"
-            print str(e)
-            raise e
+                                  ['commit', 'Create Comment']],
+                          description="Create New Comment")
 
 
 
     def test_critical_path_readonly(self):
-	server_url = self.server_url
-        try:
-            self.get(server_url, description='View root URL')
-            self.get(server_url + "/dinners/", description='View root URL')
-            self.get(server_url + "/users/1", description="View the user signup page")
-            self.get(server_url + "/dinners/1", description="View the user signup page")
-        except Exception as e:            
-            print "Error, did you run the critical path test first?:\n"
-            print str(e)
-            raise e
+        # The database has not to be empty!
+        server_url = self.server_url
+        self.get(server_url, description='View root URL')
+        self.get(server_url + "/dinners/", description='View root URL')
+        self.get(server_url + "/users/1", description="View the user signup page")
+        self.get(server_url + "/dinners/1", description="View the user signup page")
 
 
 
