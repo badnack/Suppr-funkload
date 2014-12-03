@@ -70,7 +70,7 @@ class Critical(FunkLoadTestCase):
             last_url = self.getLastUrl()
             created_suppr_id = last_url.split('/')[-1]
 
-            self.get(server_url + "dinners/join/"+created_suppr_id, description="View the created Suppr page")
+            self.get(server_url + "/dinners/join/"+created_suppr_id, description="View the created Suppr page")
 
             # add N comments
             for i in range(0, N):
