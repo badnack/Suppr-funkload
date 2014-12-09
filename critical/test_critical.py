@@ -10,7 +10,7 @@ from funkload.utils import extract_token
 from funkload.Lipsum import Lipsum
 from random import randint
 
-N = 1
+N = 50
 
 class Critical(FunkLoadTestCase):
     """This test use a configuration file Simple.conf."""
@@ -90,10 +90,13 @@ class Critical(FunkLoadTestCase):
     def test_critical_path_readonly(self):
         # The database has not to be empty!
         server_url = self.server_url
+        uid = randint(0,N-1)        
+        did = randint(0,N-1)        
+
         self.get(server_url, description='View root URL')
         self.get(server_url + "/dinners/", description='View root URL')
-        self.get(server_url + "/users/1", description="View the user signup page")
-        self.get(server_url + "/dinners/1", description="View the user signup page")
+        self.get(server_url + "/users/" + uid, description="View the user signup page")
+        self.get(server_url + "/dinners/" +  did, description="View the user signup page")
 
 
 
