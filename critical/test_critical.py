@@ -90,14 +90,16 @@ class Critical(FunkLoadTestCase):
     def test_critical_path_readonly(self):
         # The database has not to be empty!
         server_url = self.server_url
-        uid = randint(0,N-1)        
-        did = randint(0,N-1)        
-
-        self.get(server_url, description='View root URL')
-        self.get(server_url + "/dinners/", description='View root URL')
-        self.get(server_url + "/users/" + uid, description="View the user signup page")
-        self.get(server_url + "/dinners/" +  did, description="View the user signup page")
-
+        uid = randint(1,N-1)        
+        did = randint(1,N-1)        
+        try:
+            self.get(server_url, description='View root URL')
+            self.get(server_url + "/dinners/", description='View root URL')
+            self.get(server_url + "/users/" + str(uid), description="View the user signup page")
+            self.get(server_url + "/dinners/" +  str(did), description="View the user signup page")
+        except Exception as e:
+            print str(e)
+            raise e
 
 
 if __name__ in ('main', '__main__'):
