@@ -27,7 +27,6 @@ class Critical(FunkLoadTestCase):
         server_url = self.server_url
 
         # create a new user
-        self.get(server_url, description='Get root URL')
         self.get(server_url + "/users/sign_up", description="View the user signup page")
         auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
         email = Lipsum().getUniqWord() + "@" + Lipsum().getWord() + ".com"
@@ -93,10 +92,12 @@ class Critical(FunkLoadTestCase):
         uid = randint(1,N-1)        
         did = randint(1,N-1)        
         try:
-            self.get(server_url, description='View root URL')
             self.get(server_url + "/dinners/", description='View root URL')
+            print("got home\n")
             self.get(server_url + "/users/" + str(uid), description="View the user signup page")
+            print("got user page")
             self.get(server_url + "/dinners/" +  str(did), description="View the user signup page")
+            print("got dinner")
         except Exception as e:
             print str(e)
             raise e
