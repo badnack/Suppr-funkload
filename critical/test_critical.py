@@ -10,7 +10,7 @@ from funkload.utils import extract_token
 from funkload.Lipsum import Lipsum
 from random import randint
 
-N = 50
+N = 500000
 
 class Critical(FunkLoadTestCase):
     """This test use a configuration file Simple.conf."""
@@ -42,47 +42,45 @@ class Critical(FunkLoadTestCase):
                           ['commit', 'Sign up']],
                   description="Create New User")
 
-        # create N new suppr
-        for i in range(0, N):
-            self.get(server_url + "/dinners/new", description="Create a new suppr")
-            auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
-            suppr_title = Lipsum().getSentence()
-            suppr_date = datetime.date.today() + datetime.timedelta(days=randint(0,365*10))
-            suppr_location = Lipsum().getSentence()
-            suppr_description = Lipsum().getSentence()
-            suppr_category = "Italian"
-            suppr_price = 26
-            suppr_seats = 30
-            # FIXME: suppr_image ....
-            self.post(self.server_url + "/dinners",
-                      params=[['dinner[title]', suppr_title],
-                              ['dinner[date]', suppr_date],
-                              ['dinner[location]', suppr_location],
-                              ['dinner[description]', suppr_description],
-                              ['dinner[price]', suppr_price],
-                              ['dinner[category]', suppr_category],
-                              ['dinner[seats]', suppr_seats],
-                              ['authenticity_token', auth_token],
-                              ['commit', 'Create Dinner']],
-                      description="Create New Suppr")
+        # create a new suppr
+        self.get(server_url + "/dinners/new", description="Create a new suppr")
+        auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
+        suppr_title = Lipsum().getSentence()
+        suppr_date = datetime.date.today() + datetime.timedelta(days=randint(0,365*10))
+        suppr_location = Lipsum().getSentence()
+        suppr_description = Lipsum().getSentence()
+        suppr_category = "Italian"
+        suppr_price = 26
+        suppr_seats = 30
+        # FIXME: suppr_image ....
+        self.post(self.server_url + "/dinners",
+                  params=[['dinner[title]', suppr_title],
+                          ['dinner[date]', suppr_date],
+                          ['dinner[location]', suppr_location],
+                          ['dinner[description]', suppr_description],
+                          ['dinner[price]', suppr_price],
+                          ['dinner[category]', suppr_category],
+                          ['dinner[seats]', suppr_seats],
+                          ['authenticity_token', auth_token],
+                          ['commit', 'Create Dinner']],
+                  description="Create New Suppr")
+        
+        last_url = self.getLastUrl()
+        created_suppr_id = last_url.split('/')[-1]
+        
+        self.get(server_url + "/dinners/join/"+created_suppr_id, description="View the created Suppr page")
 
-            last_url = self.getLastUrl()
-            created_suppr_id = last_url.split('/')[-1]
-
-            self.get(server_url + "/dinners/join/"+created_suppr_id, description="View the created Suppr page")
-
-            # add N comments
-            for i in range(0, N):
-                self.get(server_url + "/dinners/"+created_suppr_id, description="View the created Suppr page")
-                auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
-                comment_content = Lipsum().getSentence()
-                comment_suppr_id = extract_token(self.getBody(), 'id="comment_dinner_id" name="comment[dinner_id]" type="hidden" value="', '"')
-                self.post(self.server_url + "/comments",
-                          params=[['comment[content]', comment_content],
-                                  ['comment[dinner_id]', comment_suppr_id],
-                                  ['authenticity_token', auth_token],
-                                  ['commit', 'Create Comment']],
-                          description="Create New Comment")
+        # add a comments
+        self.get(server_url + "/dinners/"+created_suppr_id, description="View the created Suppr page")
+        auth_token = extract_token(self.getBody(), 'name="authenticity_token" type="hidden" value="', '"')
+        comment_content = Lipsum().getSentence()
+        comment_suppr_id = extract_token(self.getBody(), 'id="comment_dinner_id" name="comment[dinner_id]" type="hidden" value="', '"')
+        self.post(self.server_url + "/comments",
+                  params=[['comment[content]', comment_content],
+                          ['comment[dinner_id]', comment_suppr_id],
+                          ['authenticity_token', auth_token],
+                          ['commit', 'Create Comment']],
+                  description="Create New Comment")
 
 
 
@@ -93,11 +91,8 @@ class Critical(FunkLoadTestCase):
         did = randint(1,N-1)        
         try:
             self.get(server_url + "/dinners/", description='View root URL')
-            print("got home\n")
             self.get(server_url + "/users/" + str(uid), description="View the user signup page")
-            print("got user page")
             self.get(server_url + "/dinners/" +  str(did), description="View the user signup page")
-            print("got dinner")
         except Exception as e:
             print str(e)
             raise e
